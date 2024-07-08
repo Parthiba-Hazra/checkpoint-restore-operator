@@ -54,7 +54,7 @@ const (
 var (
 	GarbageCollector           garbageCollector
 	policyMutex                sync.RWMutex
-	checkpointDirectory        string = "/var/lib/kubelet/checkpoints/"
+	checkpointDirectory        string = "/var/lib/kubelet/checkpoints"
 	quit                       chan bool
 	maxCheckpointsPerContainer int = 10
 	maxCheckpointsPerPod       int = 20
@@ -319,6 +319,15 @@ func applyPoliciesImmediately(log logr.Logger, checkpointDirectory string) {
 
 	if len(checkpointFiles) == 0 {
 		log.Info("No checkpoint files found")
+		files, err := os.ReadDir(checkpointDirectory)
+		if err != nil {
+			log.Error(err, "Failed to list contents of directory")
+		} else {
+			log.Info("Contents of the directory:")
+			for _, file := range files {
+				log.Info(file.Name())
+			}
+		}
 		return
 	}
 
@@ -501,6 +510,16 @@ func (gc *garbageCollector) runGarbageCollector() {
 		log.Error(err, "runGarbageCollector()")
 	}
 	defer watcher.Close()
+
+	// Log the list of all files in the checkpointDirectory(dor debugging purpose)
+	files, err := os.ReadDir(checkpointDirectory)
+	if err != nil {
+		log.Error(err, "failed to read checkpointDirectory")
+	} else {
+		for _, file := range files {
+			log.Info("Existing file", "name", file.Name())
+		}
+	}
 
 	c := make(chan struct{})
 

@@ -2,7 +2,7 @@
 
 wait_for_deployment() {
 	local deployment_name="$1"
-	timeout=60 # 5 minutes (60 * 5 sec)
+	timeout=20 # 5 minutes (60 * 5 sec)
 	i=1
 	echo "Checking if the ${deployment_name} deployment is ready"
 	until kubectl -n checkpoint-restore-operator-system get deployment "${deployment_name}" -o jsonpath='{.status.conditions[?(@.status=="True")].type}' | grep "Available" 2>/dev/null; do
@@ -14,9 +14,14 @@ wait_for_deployment() {
 			kubectl -n checkpoint-restore-operator-system describe deployment "${deployment_name}"
 			kubectl -n checkpoint-restore-operator-system get pods
 			kubectl -n checkpoint-restore-operator-system describe pods
+			echo "Fetching detailed logs from the pods for further debugging:"
+			for pod in $(kubectl -n checkpoint-restore-operator-system get pods -o jsonpath='{.items[*].metadata.name}'); do
+				echo "Logs for pod ${pod}:"
+				kubectl -n checkpoint-restore-operator-system logs "${pod}"
+			done
 			exit 1
 		fi
-		echo "Waiting for ${deployment_name} deployment to report a ready status"
+		echo "Waiting for ${deployment_name} deployment to report a ready status (Attempt ${i}/${timeout})"
 		sleep 5
 	done
 	echo "The ${deployment_name} deployment is ready"
