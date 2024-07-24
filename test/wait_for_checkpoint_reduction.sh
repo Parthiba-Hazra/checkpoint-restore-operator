@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CHECKPOINTS_DIR="/var/lib/kubelet/checkpoints"
+CHECKPOINTS_DIR="$HOME/checkpoints"
 EXPECTED_COUNT=2
 TIMEOUT=60
 start_time=$(date +%s)

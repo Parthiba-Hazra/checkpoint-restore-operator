@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/created-by: checkpoint-restore-operator
   name: checkpointrestoreoperator-sample
 spec:
-  checkpointDirectory: /var/lib/kubelet/checkpoints
+  checkpointDirectory: /root/checkpoints
   applyPoliciesImmediately: true
   globalPolicy:
     maxCheckpointsPerNamespace: 10

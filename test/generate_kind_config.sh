@@ -9,6 +9,6 @@ CHECKPOINT_DIR="/var/lib/kubelet/checkpoints"
 	echo "nodes:"
 	echo "- role: control-plane"
 	echo "  extraMounts:"
-	echo "  - hostPath: $CHECKPOINT_DIR"
+	echo "  - hostPath: $HOME/checkpoints"
 	echo "    containerPath: $CHECKPOINT_DIR"
 } >$CONFIG_FILE

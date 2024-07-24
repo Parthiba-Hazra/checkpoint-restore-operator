@@ -108,5 +108,5 @@ spec:
       volumes:
       - name: kubelet-checkpoints
         hostPath:
-          path: /var/lib/kubelet/checkpoints
+          path: "/root/checkpoints"
           type: DirectoryOrCreate

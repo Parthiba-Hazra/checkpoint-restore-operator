@@ -22,8 +22,8 @@ create_checkpoint_tar() {
 	local tar_name=$1
 	local original_name=$2
 	tar -cf "$tar_name" -C "$TEMP_DIR" .
-	sudo mv "$tar_name" "/var/lib/kubelet/checkpoints/$original_name"
-	echo "Checkpoint tar file created at /var/lib/kubelet/checkpoints/$original_name"
+	sudo mv "$tar_name" "$HOME/checkpoints/$original_name"
+	echo "Checkpoint tar file created at $HOME/checkpoints/$original_name"
 }
 
 for _ in {1..5}; do

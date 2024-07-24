@@ -1,0 +1,74 @@
+on: [push, pull_request]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      CHECKPOINT_DIR: $HOME/checkpoints
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
+
+      - name: Install dependencies
+        run: |
+          # Install kind
+          curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-arm64")] | first | .browser_download_url')"
+          chmod +x kind
+          sudo mv kind /bin/
+          
+          # Install kubectl
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/arm64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /bin/
+
+      - name: Prepare Checkpoints Directory in Host
+        run: |
+          sudo mkdir -p ${{ env.CHECKPOINT_DIR }}
+          sudo chmod 700 ${{ env.CHECKPOINT_DIR }}
+          sudo chown $USER ${{ env.CHECKPOINT_DIR }}
+          sudo echo ${{ env.CHECKPOINT_DIR }}
+
+      - name: Generate Checkpoint Tar Files
+        run: ./test/generate_checkpoint_tar.sh
+
+      - name: Generate Kind Config
+        run: ./test/generate_kind_config.sh
+
+      - name: Delete Existing Kind Cluster
+        run: kind delete cluster || true
+
+      - name: Create Kubernetes cluster
+        run: kind create cluster --config=kind-config.yaml
+
+      - name: Load Docker image into kind cluster
+        run: |
+          docker rmi checkpoint-restore-operator:ci || true
+          make docker-build IMG=checkpoint-restore-operator:ci
+          docker images | grep checkpoint-restore-operator
+          kind load docker-image checkpoint-restore-operator:ci
+
+      - name: Replace Placeholder in Manifest
+        run: |
+          sed -i "s#__CHECKPOINT_DIR__#${{ env.CHECKPOINT_DIR }}#g" ./config/manager/manager.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          make install
+          make deploy IMG=checkpoint-restore-operator:ci
+          sudo ls ${{ env.CHECKPOINT_DIR }}
+
+      - name: Wait for deployments to be ready
+        run: ./test/wait_for_deployment.sh checkpoint-restore-operator-controller-manager
+
+      - name: Check resources
+        run: kubectl get all -n checkpoint-restore-operator-system
+
+      - name: Wait for Checkpoint Tar Files to Reduce
+        run: |
+          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
+          ./test/wait_for_checkpoint_reduction.sh
