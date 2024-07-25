@@ -4,7 +4,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     env:
-      CHECKPOINT_DIR: $HOME/checkpoints
+      CHECKPOINT_DIR: /var/lib/kubelet/checkpoints
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,12 +17,12 @@ jobs:
       - name: Install dependencies
         run: |
           # Install kind
-          curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-arm64")] | first | .browser_download_url')"
+          curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-amd64")] | first | .browser_download_url')"
           chmod +x kind
           sudo mv kind /bin/
           
           # Install kubectl
-          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/arm64/kubectl"
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
           sudo mv kubectl /bin/
 
@@ -31,19 +31,20 @@ jobs:
           sudo mkdir -p ${{ env.CHECKPOINT_DIR }}
           sudo chmod 700 ${{ env.CHECKPOINT_DIR }}
           sudo chown $USER ${{ env.CHECKPOINT_DIR }}
-          sudo echo ${{ env.CHECKPOINT_DIR }}
+          # sudo echo ${{ env.CHECKPOINT_DIR }}
 
       - name: Generate Checkpoint Tar Files
         run: ./test/generate_checkpoint_tar.sh
 
-      - name: Generate Kind Config
-        run: ./test/generate_kind_config.sh
+      # - name: Generate Kind Config
+      #   run: ./test/generate_kind_config.sh
 
-      - name: Delete Existing Kind Cluster
-        run: kind delete cluster || true
+      # - name: Delete Existing Kind Cluster
+      #   run: kind delete cluster || true
 
       - name: Create Kubernetes cluster
-        run: kind create cluster --config=kind-config.yaml
+        run: kind create cluster 
+        # --config=kind-config.yaml
 
       - name: Load Docker image into kind cluster
         run: |
@@ -52,9 +53,9 @@ jobs:
           docker images | grep checkpoint-restore-operator
           kind load docker-image checkpoint-restore-operator:ci
 
-      - name: Replace Placeholder in Manifest
-        run: |
-          sed -i "s#__CHECKPOINT_DIR__#${{ env.CHECKPOINT_DIR }}#g" ./config/manager/manager.yaml
+      # - name: Replace Placeholder in Manager
+      #   run: |
+      #     sed -i "s#__CHECKPOINT_DIR__#${{ env.CHECKPOINT_DIR }}#g" ./config/manager/manager.yaml
 
       - name: Deploy to Kubernetes
         run: |
