@@ -36,20 +36,20 @@ jobs:
       - name: Generate Checkpoint Tar Files
         run: ./test/generate_checkpoint_tar.sh
 
-      - name: Generate Kind Config
-        run: ./test/generate_kind_config.sh
+      # - name: Generate Kind Config
+      #   run: ./test/generate_kind_config.sh
 
       # - name: Delete Existing Kind Cluster
       #   run: kind delete cluster || true
 
       - name: Create Kubernetes cluster
-        run: kind create cluster --config=kind-config.yaml
+        run: kind create cluster --extra-mounts "/var/lib/kubelet/checkpoints:/var/lib/kubelet/checkpoints"
 
       - name: Load Docker image into kind cluster
         run: |
-          docker rmi checkpoint-restore-operator:ci || true
+          # docker rmi checkpoint-restore-operator:ci || true
           make docker-build IMG=checkpoint-restore-operator:ci
-          docker images | grep checkpoint-restore-operator
+          # docker images | grep checkpoint-restore-operator
           kind load docker-image checkpoint-restore-operator:ci
 
       # - name: Replace Placeholder in Manager

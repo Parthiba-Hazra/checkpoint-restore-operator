@@ -1,0 +1,29 @@
+apiVersion: criu.org/v1
+kind: CheckpointRestoreOperator
+metadata:
+  labels:
+    app.kubernetes.io/name: checkpointrestoreoperator
+    app.kubernetes.io/instance: checkpointrestoreoperator-sample
+    app.kubernetes.io/part-of: checkpoint-restore-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: checkpoint-restore-operator
+  name: checkpointrestoreoperator-sample
+spec:
+  checkpointDirectory: /var/lib/kubelet/checkpoints
+  applyPoliciesImmediately: true
+  globalPolicy:
+    maxCheckpointsPerNamespace: 50
+    maxCheckpointsPerPod: 30
+    maxCheckpointsPerContainer: 5
+  # containerPolicies:
+  #   - namespace: default
+  #     pod: nginx-deployment-85bfd45d84-7gcjh
+  #     container: nginx
+  #     maxCheckpoints: 15
+  # podPolicies:
+  #   - namespace: default
+  #     pod: nginx-deployment-85bfd45d84-7gcjh
+  #     maxCheckpoints: 10
+  # namespacePolicies:
+  #   - namespace: default
+  #     maxCheckpoints: 15
