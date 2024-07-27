@@ -43,7 +43,7 @@ jobs:
       #   run: kind delete cluster || true
 
       - name: Create Kubernetes cluster
-        run: kind create cluster --extra-mounts "/var/lib/kubelet/checkpoints:/var/lib/kubelet/checkpoints"
+        run: kind create cluster --config=./test/kind-config.yaml
 
       - name: Load Docker image into kind cluster
         run: |
