@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CHECKPOINTS_DIR="/var/lib/kubelet/checkpoints"
 EXPECTED_COUNT=2
 TIMEOUT=60
@@ -23,11 +25,16 @@ print_operator_pod_logs() {
 	fi
 }
 
-# Wait for the checkpoint tar files to be reduced from 5 to 2
+initial_count=$(count_tar_files)
+echo "Initial checkpoint tar files count: $initial_count"
+echo "Waiting for checkpoint tar files to be exactly $EXPECTED_COUNT..."
+
+# Wait for the checkpoint tar files to be exactly equal to EXPECTED_COUNT
 while true; do
 	current_count=$(count_tar_files)
-	if [ "$current_count" -le "$EXPECTED_COUNT" ]; then
-		echo "Checkpoint tar files reduced to $current_count (<= $EXPECTED_COUNT)"
+	echo "Checkpoint tar files count: $current_count (waiting for exactly $EXPECTED_COUNT)"
+	if [ "$current_count" -eq "$EXPECTED_COUNT" ]; then
+		echo "Checkpoint tar files count is exactly $current_count (== $EXPECTED_COUNT)"
 		break
 	fi
 	current_time=$(date +%s)
@@ -39,7 +46,8 @@ while true; do
 		print_operator_pod_logs
 		exit 1
 	fi
-	echo "Checkpoint tar files count is $current_count (waiting for $EXPECTED_COUNT)"
 	print_operator_pod_logs
 	sleep 5
 done
+
+echo "Checkpoint reduction check completed successfully."

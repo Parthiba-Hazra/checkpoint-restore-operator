@@ -70,5 +70,7 @@ jobs:
 
       - name: Wait for Checkpoint Tar Files to Reduce
         run: |
+          ls -la ${{ env.CHECKPOINT_DIR }}
           kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
           ./test/wait_for_checkpoint_reduction.sh
+          ls -la ${{ env.CHECKPOINT_DIR }}
