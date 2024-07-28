@@ -25,8 +25,6 @@ print_operator_pod_logs() {
 	fi
 }
 
-initial_count=$(count_tar_files)
-echo "Initial checkpoint tar files count: $initial_count"
 echo "Waiting for checkpoint tar files to be exactly $EXPECTED_COUNT..."
 
 # Wait for the checkpoint tar files to be exactly equal to EXPECTED_COUNT
