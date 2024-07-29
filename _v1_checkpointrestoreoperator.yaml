@@ -14,12 +14,12 @@ spec:
   globalPolicy:
     maxCheckpointsPerNamespace: 50
     maxCheckpointsPerPod: 30
-    maxCheckpointsPerContainer: 5
+    maxCheckpointsPerContainer: 1
   # containerPolicies:
   #   - namespace: default
   #     pod: nginx-deployment-85bfd45d84-7gcjh
   #     container: nginx
-  #     maxCheckpoints: 15
+  #     maxCheckpoints: 1
   # podPolicies:
   #   - namespace: default
   #     pod: nginx-deployment-85bfd45d84-7gcjh

@@ -26,12 +26,17 @@ create_checkpoint_tar() {
 	echo "Checkpoint tar file created at /var/lib/kubelet/checkpoints/$original_name"
 }
 
+increment_timestamp() {
+  date -d "$1 + 1 second" +%Y-%m-%dT%H:%M:%S
+}
+
+TIMESTAMP=$(date +%Y-%m-%dT%H:%M:%S)
+
 for _ in {1..5}; do
-	TIMESTAMP=$(date +%Y-%m-%dT%H:%M:%S)
 	TAR_NAME="checkpoint.tar"
 	ORIGINAL_NAME="checkpoint-podname_namespace-containername-$TIMESTAMP.tar"
 	create_checkpoint_tar "$TAR_NAME" "$ORIGINAL_NAME"
-	sleep 1
+	TIMESTAMP=$(increment_timestamp "$TIMESTAMP")
 done
 
 rm -rf "$TEMP_DIR"

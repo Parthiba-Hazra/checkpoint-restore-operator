@@ -3,7 +3,7 @@
 set -e
 
 CHECKPOINTS_DIR="/var/lib/kubelet/checkpoints"
-EXPECTED_COUNT=2
+EXPECTED_COUNT=${1:-2}
 TIMEOUT=60
 start_time=$(date +%s)
 
