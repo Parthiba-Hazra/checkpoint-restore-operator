@@ -30,7 +30,7 @@ jobs:
         run: |
           sudo mkdir -p ${{ env.CHECKPOINT_DIR }}
           sudo chmod 700 ${{ env.CHECKPOINT_DIR }}
-          # sudo chown $USER ${{ env.CHECKPOINT_DIR }}
+          sudo chown $USER ${{ env.CHECKPOINT_DIR }}
           # sudo echo ${{ env.CHECKPOINT_DIR }}
 
       - name: Generate Checkpoint Tar Files
