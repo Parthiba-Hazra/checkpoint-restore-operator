@@ -68,7 +68,7 @@ jobs:
       - name: Check resources
         run: kubectl get all -n checkpoint-restore-operator-system
 
-      - name: Wait for Checkpoint Tar Files to Reduce
+      - name: Wait for Checkpoint Tar Files to Reduce to 2
         run: |
           ls -la ${{ env.CHECKPOINT_DIR }}
 
@@ -77,6 +77,8 @@ jobs:
           ./test/wait_for_checkpoint_reduction.sh 2
           ls -la ${{ env.CHECKPOINT_DIR }}
 
+      - name: Wait for Checkpoint Tar Files to Reduce to 7
+        run: |
           # Checkpoint files should not reduced to 0
           ./test/generate_checkpoint_tar.sh
           sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 0/' ./test/test_checkpointrestoreoperator.yaml
@@ -87,6 +89,8 @@ jobs:
           ./test/wait_for_checkpoint_reduction.sh 7
           ls -la ${{ env.CHECKPOINT_DIR }}
 
+      - name: Wait for Checkpoint Tar Files to Reduce to 1
+        run: |
           # Checkpoint files should reduced to 1
           sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 1/' ./test/test_checkpointrestoreoperator.yaml
           sed -i '/^  containerPolicies:/,/maxCheckpoints: [0-9]*/ s/^/#/' ./test/test_checkpointrestoreoperator.yaml
