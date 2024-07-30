@@ -15,15 +15,15 @@ spec:
     maxCheckpointsPerNamespace: 50
     maxCheckpointsPerPod: 30
     maxCheckpointsPerContainer: 1
-  # containerPolicies:
-  #   - namespace: default
-  #     pod: nginx-deployment-85bfd45d84-7gcjh
-  #     container: nginx
-  #     maxCheckpoints: 1
-  # podPolicies:
-  #   - namespace: default
-  #     pod: nginx-deployment-85bfd45d84-7gcjh
-  #     maxCheckpoints: 10
-  # namespacePolicies:
-  #   - namespace: default
-  #     maxCheckpoints: 15
+  containerPolicies:
+    - namespace: default
+      pod: nginx-deployment-85bfd45d84-7gcjh
+      container: nginx
+      maxCheckpoints: 0
+  podPolicies:
+    - namespace: default
+      pod: nginx-deployment-85bfd45d84-7gcjh
+      maxCheckpoints: 10
+  namespacePolicies:
+    - namespace: default
+      maxCheckpoints: 15
