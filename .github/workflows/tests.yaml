@@ -87,6 +87,7 @@ jobs:
           ls -la ${{ env.CHECKPOINT_DIR }}
           kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
           ./test/generate_checkpoint_tar.sh
+          sleep 5
           ./test/wait_for_checkpoint_reduction.sh 7
           ls -la ${{ env.CHECKPOINT_DIR }}
 
