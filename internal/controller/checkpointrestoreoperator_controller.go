@@ -91,51 +91,76 @@ func (r *CheckpointRestoreOperatorReconciler) Reconcile(ctx context.Context, req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// Handle global policies update
-	if input.Spec.GlobalPolicies.MaxCheckpointsPerContainer != nil &&
-		*input.Spec.GlobalPolicies.MaxCheckpointsPerContainer >= 0 &&
-		*input.Spec.GlobalPolicies.MaxCheckpointsPerContainer != maxCheckpointsPerContainer {
-		maxCheckpointsPerContainer = *input.Spec.GlobalPolicies.MaxCheckpointsPerContainer
-		log.Info("Changed MaxCheckpointsPerContainer", "maxCheckpointsPerContainer", maxCheckpointsPerContainer)
-	}
-
-	if input.Spec.GlobalPolicies.MaxCheckpointsPerPod != nil &&
-		*input.Spec.GlobalPolicies.MaxCheckpointsPerPod >= 0 {
-		maxCheckpointsPerPod = *input.Spec.GlobalPolicies.MaxCheckpointsPerPod
-		log.Info("Changed MaxCheckpointsPerPod", "maxCheckpointsPerPod", maxCheckpointsPerPod)
-	}
-
-	if input.Spec.GlobalPolicies.MaxCheckpointsPerNamespaces != nil &&
-		*input.Spec.GlobalPolicies.MaxCheckpointsPerNamespaces >= 0 {
-		maxCheckpointsPerNamespace = *input.Spec.GlobalPolicies.MaxCheckpointsPerNamespaces
-		log.Info("Changed MaxCheckpointsPerNamespace", "maxCheckpointsPerNamespace", maxCheckpointsPerNamespace)
-	}
-
-	if input.Spec.ContainerPolicies != nil && len(input.Spec.ContainerPolicies) > 0 {
-		containerPolicies = input.Spec.ContainerPolicies
-	}
-
-	if input.Spec.PodPolicies != nil && len(input.Spec.PodPolicies) > 0 {
-		podPolicies = input.Spec.PodPolicies
-	}
-
-	if input.Spec.ContainerPolicies != nil && len(input.Spec.NamespacePolicies) > 0 {
-		namespacePolicies = input.Spec.NamespacePolicies
-	}
+	r.handleGlobalPolicies(log, &input.Spec.GlobalPolicies)
+	r.handleSpecificPolicies(log, &input.Spec)
 
 	if input.Spec.CheckpointDirectory != "" && input.Spec.CheckpointDirectory != checkpointDirectory {
 		checkpointDirectory = input.Spec.CheckpointDirectory
-		quit <- true
-		quit = make(chan bool)
-		go GarbageCollector.runGarbageCollector()
+		r.restartGarbageCollector()
 	}
 
-	// If ApplyPoliciesImmediately is set to true, apply policies immediately
 	if input.Spec.ApplyPoliciesImmediately {
 		go applyPoliciesImmediately(log, checkpointDirectory)
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *CheckpointRestoreOperatorReconciler) handleGlobalPolicies(log logr.Logger, globalPolicies *criuorgv1.GlobalPolicySpec) {
+	policyMutex.Lock()
+	defer policyMutex.Unlock()
+
+	if globalPolicies.MaxCheckpointsPerContainer != nil && *globalPolicies.MaxCheckpointsPerContainer >= 0 {
+		maxCheckpointsPerContainer = *globalPolicies.MaxCheckpointsPerContainer
+		log.Info("Changed MaxCheckpointsPerContainer", "maxCheckpointsPerContainer", maxCheckpointsPerContainer)
+	}
+
+	if globalPolicies.MaxCheckpointsPerPod != nil && *globalPolicies.MaxCheckpointsPerPod >= 0 {
+		maxCheckpointsPerPod = *globalPolicies.MaxCheckpointsPerPod
+		log.Info("Changed MaxCheckpointsPerPod", "maxCheckpointsPerPod", maxCheckpointsPerPod)
+	}
+
+	if globalPolicies.MaxCheckpointsPerNamespaces != nil && *globalPolicies.MaxCheckpointsPerNamespaces >= 0 {
+		maxCheckpointsPerNamespace = *globalPolicies.MaxCheckpointsPerNamespaces
+		log.Info("Changed MaxCheckpointsPerNamespace", "maxCheckpointsPerNamespace", maxCheckpointsPerNamespace)
+	}
+}
+
+func (r *CheckpointRestoreOperatorReconciler) handleSpecificPolicies(log logr.Logger, spec *criuorgv1.CheckpointRestoreOperatorSpec) {
+	policyMutex.Lock()
+	defer policyMutex.Unlock()
+
+	// Clear existing policies before applying new ones
+	containerPolicies = nil
+	podPolicies = nil
+	namespacePolicies = nil
+
+	if spec.ContainerPolicies != nil && len(spec.ContainerPolicies) > 0 {
+		containerPolicies = spec.ContainerPolicies
+		log.Info("Found and applied container-specific policies", "count", len(containerPolicies))
+	} else {
+		log.Info("No container-specific policies found")
+	}
+
+	if spec.PodPolicies != nil && len(spec.PodPolicies) > 0 {
+		podPolicies = spec.PodPolicies
+		log.Info("Found and applied pod-specific policies", "count", len(podPolicies))
+	} else {
+		log.Info("No pod-specific policies found")
+	}
+
+	if spec.NamespacePolicies != nil && len(spec.NamespacePolicies) > 0 {
+		namespacePolicies = spec.NamespacePolicies
+		log.Info("Found and applied namespace-specific policies", "count", len(namespacePolicies))
+	} else {
+		log.Info("No namespace-specific policies found")
+	}
+}
+
+func (r *CheckpointRestoreOperatorReconciler) restartGarbageCollector() {
+	quit <- true
+	quit = make(chan bool)
+	go GarbageCollector.runGarbageCollector()
 }
 
 // UntarFiles unpack only specified files from an archive to the destination directory.
@@ -261,23 +286,23 @@ func applyPolicies(log logr.Logger, details *checkpointDetails) {
 
 	if policy := findContainerPolicy(details); policy != nil {
 		log.Info("Applying container-level policy", "container", details.container)
-		handleCheckpointsForLevel(log, details, "container", int(*policy.MaxCheckpoints), details.container)
+		handleCheckpointsForLevel(log, details, "container", int(*policy.MaxCheckpoints))
 	} else if policy := findPodPolicy(details); policy != nil {
 		log.Info("Applying pod-level policy", "pod", details.pod)
-		handleCheckpointsForLevel(log, details, "pod", int(*policy.MaxCheckpoints), details.pod)
+		handleCheckpointsForLevel(log, details, "pod", int(*policy.MaxCheckpoints))
 	} else if policy := findNamespacePolicy(details); policy != nil {
 		log.Info("Applying namespace-level policy", "namespace", details.namespace)
-		handleCheckpointsForLevel(log, details, "namespace", int(*policy.MaxCheckpoints), details.namespace)
+		handleCheckpointsForLevel(log, details, "namespace", int(*policy.MaxCheckpoints))
 	} else {
 		// Apply global policies if no specific policy found
 		log.Info("Applying global container-level policy", "container", details.container)
-		handleCheckpointsForLevel(log, details, "container", maxCheckpointsPerContainer, details.container)
+		handleCheckpointsForLevel(log, details, "container", maxCheckpointsPerContainer)
 
 		log.Info("Applying global pod-level policy", "pod", details.pod)
-		handleCheckpointsForLevel(log, details, "pod", maxCheckpointsPerPod, details.pod)
+		handleCheckpointsForLevel(log, details, "pod", maxCheckpointsPerPod)
 
 		log.Info("Applying global namespace-level policy", "namespace", details.namespace)
-		handleCheckpointsForLevel(log, details, "namespace", maxCheckpointsPerNamespace, details.namespace)
+		handleCheckpointsForLevel(log, details, "namespace", maxCheckpointsPerNamespace)
 	}
 }
 
@@ -366,7 +391,7 @@ func handleWriteFinished(ctx context.Context, event fsnotify.Event) {
 	applyPolicies(log, details)
 }
 
-func handleCheckpointsForLevel(log logr.Logger, details *checkpointDetails, level string, maxCheckpoints int, levelName string) {
+func handleCheckpointsForLevel(log logr.Logger, details *checkpointDetails, level string, maxCheckpoints int) {
 	if maxCheckpoints <= 0 {
 		return
 	}
@@ -446,7 +471,7 @@ func handleCheckpointsForLevel(log logr.Logger, details *checkpointDetails, leve
 	if maxCheckpoints > 0 && checkpointArchivesCounter > maxCheckpoints {
 		excessCount := int64(checkpointArchivesCounter - maxCheckpoints)
 		log.Info("Checkpoint count exceeds limit", "checkpointArchivesCounter", checkpointArchivesCounter, "maxCheckpoints", maxCheckpoints, "excessCount", excessCount)
-		toDelete := selectArchivesToDelete(log, checkpointArchives, excessCount, ByCount)
+		toDelete := selectArchivesToDelete(checkpointArchives, excessCount, ByCount)
 		for _, archive := range toDelete {
 			log.Info("Deleting checkpoint archive due to excess count", "archive", archive)
 			err := os.Remove(archive)
@@ -461,7 +486,7 @@ func handleCheckpointsForLevel(log logr.Logger, details *checkpointDetails, leve
 	}
 }
 
-func selectArchivesToDelete(log logr.Logger, archives []string, excess int64, policy RetentionPolicy) []string {
+func selectArchivesToDelete(archives []string, excess int64, policy RetentionPolicy) []string {
 	toDelete := make([]string, 0)
 
 	switch policy {
@@ -510,16 +535,6 @@ func (gc *garbageCollector) runGarbageCollector() {
 		log.Error(err, "runGarbageCollector()")
 	}
 	defer watcher.Close()
-
-	// Log the list of all files in the checkpointDirectory(dor debugging purpose)
-	files, err := os.ReadDir(checkpointDirectory)
-	if err != nil {
-		log.Error(err, "failed to read checkpointDirectory")
-	} else {
-		for _, file := range files {
-			log.Info("Existing file", "name", file.Name())
-		}
-	}
 
 	c := make(chan struct{})
 
