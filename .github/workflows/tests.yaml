@@ -77,26 +77,42 @@ jobs:
           ./test/wait_for_checkpoint_reduction.sh 2
           ls -la ${{ env.CHECKPOINT_DIR }}
 
+      - name: Update maxCheckpointsPerContainer
+        uses: fjogeleit/yaml-update-action@v0.15.0
+        with:
+          valueFile: './test/test_checkpointrestoreoperator.yaml'
+          propertyPath: 'spec.containerPolicies[0].maxCheckpoints'
+          value: 0
+          commitChange: false
+
       - name: Wait for Checkpoint Tar Files to Reduce to 7
         run: |
           # Checkpoint files should not reduced to 0
-          # ./test/generate_checkpoint_tar.sh
-          # sudo sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 0/' ./test/test_checkpointrestoreoperator.yaml
-          # sudo sed -i '/^  containerPolicies:/,/maxCheckpoints: [0-9]*/ s/^/#/' ./test/test_checkpointrestoreoperator.yaml
-          # cat ./test/test_checkpointrestoreoperator.yaml
+          cat ./test/test_checkpointrestoreoperator.yaml
           ls -la ${{ env.CHECKPOINT_DIR }}
-          kubectl apply -f ./test/test_checkpointrestoreoperator1.yaml
+          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
           ./test/generate_checkpoint_tar.sh
           sleep 5
           ls -la ${{ env.CHECKPOINT_DIR }}
           ./test/wait_for_checkpoint_reduction.sh 7
           ls -la ${{ env.CHECKPOINT_DIR }}
 
+      - name: Update multiple values in YAML
+        uses: fjogeleit/yaml-update-action@v0.15.0
+        with:
+          valueFile: './test/test_checkpointrestoreoperator.yaml'
+          changes: |
+            {
+              "spec.globalPolicy.maxCheckpointsPerContainer": 1,
+              "spec.containerPolicies[0].namespace": default
+            }
+          commitChange: false
+
       - name: Wait for Checkpoint Tar Files to Reduce to 1
         run: |
           # Checkpoint files should reduced to 1
           # sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 1/' ./test/test_checkpointrestoreoperator.yaml
           # cat ./test/test_checkpointrestoreoperator.yaml
-          kubectl apply -f ./test/test_checkpointrestoreoperator2.yaml
+          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
           ./test/wait_for_checkpoint_reduction.sh 1
           ls -la ${{ env.CHECKPOINT_DIR }}
