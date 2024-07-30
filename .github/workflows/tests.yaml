@@ -31,30 +31,17 @@ jobs:
           sudo mkdir -p ${{ env.CHECKPOINT_DIR }}
           sudo chmod 700 ${{ env.CHECKPOINT_DIR }}
           sudo chown $USER ${{ env.CHECKPOINT_DIR }}
-          # sudo echo ${{ env.CHECKPOINT_DIR }}
 
       - name: Generate Checkpoint Tar Files
         run: ./test/generate_checkpoint_tar.sh
-
-      # - name: Generate Kind Config
-      #   run: ./test/generate_kind_config.sh
-
-      # - name: Delete Existing Kind Cluster
-      #   run: kind delete cluster || true
 
       - name: Create Kubernetes cluster
         run: kind create cluster --config=./test/kind-config.yaml
 
       - name: Load Docker image into kind cluster
         run: |
-          # docker rmi checkpoint-restore-operator:ci || true
           make docker-build IMG=checkpoint-restore-operator:ci
-          # docker images | grep checkpoint-restore-operator
           kind load docker-image checkpoint-restore-operator:ci
-
-      # - name: Replace Placeholder in Manager
-      #   run: |
-      #     sed -i "s#__CHECKPOINT_DIR__#${{ env.CHECKPOINT_DIR }}#g" ./config/manager/manager.yaml
 
       - name: Deploy to Kubernetes
         run: |
@@ -71,48 +58,29 @@ jobs:
       - name: Wait for Checkpoint Tar Files to Reduce to 2
         run: |
           ls -la ${{ env.CHECKPOINT_DIR }}
-
-          # Checkpoint files should reduced to 2
           kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
           ./test/wait_for_checkpoint_reduction.sh 2
           ls -la ${{ env.CHECKPOINT_DIR }}
 
-      - name: Update maxCheckpointsPerContainer
-        uses: fjogeleit/yaml-update-action@v0.15.0
-        with:
-          valueFile: './test/test_checkpointrestoreoperator.yaml'
-          propertyPath: 'spec.containerPolicies[0].maxCheckpoints'
-          value: 0
-          commitChange: false
-
       - name: Wait for Checkpoint Tar Files to Reduce to 7
         run: |
-          # Checkpoint files should not reduced to 0
-          cat ./test/test_checkpointrestoreoperator.yaml
+          sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 0/' ./test/test_checkpointrestoreoperator.yaml
+          sed -i '/^  containerPolicies:/,/maxCheckpoints: [0-9]*/ s/^/#/' ./test/test_checkpointrestoreoperator.yaml
+          cp ./test/test_checkpointrestoreoperator.yaml ./test/test_checkpointrestoreoperator_updated.yaml
+          cat ./test/test_checkpointrestoreoperator_updated.yaml
           ls -la ${{ env.CHECKPOINT_DIR }}
-          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
+          kubectl apply -f ./test/test_checkpointrestoreoperator_updated.yaml
           ./test/generate_checkpoint_tar.sh
           sleep 5
           ls -la ${{ env.CHECKPOINT_DIR }}
           ./test/wait_for_checkpoint_reduction.sh 7
           ls -la ${{ env.CHECKPOINT_DIR }}
 
-      - name: Update multiple values in YAML
-        uses: fjogeleit/yaml-update-action@v0.15.0
-        with:
-          valueFile: './test/test_checkpointrestoreoperator.yaml'
-          changes: |
-            {
-              "spec.globalPolicy.maxCheckpointsPerContainer": 1,
-              "spec.containerPolicies[0].namespace": default
-            }
-          commitChange: false
-
       - name: Wait for Checkpoint Tar Files to Reduce to 1
         run: |
-          # Checkpoint files should reduced to 1
-          # sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 1/' ./test/test_checkpointrestoreoperator.yaml
-          # cat ./test/test_checkpointrestoreoperator.yaml
-          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
+          sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 1/' ./test/test_checkpointrestoreoperator.yaml
+          cp ./test/test_checkpointrestoreoperator.yaml ./test/test_checkpointrestoreoperator_updated.yaml
+          cat ./test/test_checkpointrestoreoperator_updated.yaml
+          kubectl apply -f ./test/test_checkpointrestoreoperator_updated.yaml
           ./test/wait_for_checkpoint_reduction.sh 1
           ls -la ${{ env.CHECKPOINT_DIR }}
