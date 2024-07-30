@@ -15,8 +15,8 @@ spec:
     maxCheckpointsPerNamespace: 10
     maxCheckpointsPerPod: 10
     maxCheckpointsPerContainer: 5
- containerPolicies:
-   - namespace: namespace
-     pod: podname
-     container: containername
-     maxCheckpoints: 2
+  containerPolicies:
+    - namespace: namespace
+      pod: podname
+      container: containername
+      maxCheckpoints: 2
