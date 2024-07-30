@@ -81,11 +81,11 @@ jobs:
         run: |
           # Checkpoint files should not reduced to 0
           # ./test/generate_checkpoint_tar.sh
-          sudo sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 0/' ./test/test_checkpointrestoreoperator.yaml
-          sudo sed -i '/^  containerPolicies:/,/maxCheckpoints: [0-9]*/ s/^/#/' ./test/test_checkpointrestoreoperator.yaml
-          cat ./test/test_checkpointrestoreoperator.yaml
+          # sudo sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 0/' ./test/test_checkpointrestoreoperator.yaml
+          # sudo sed -i '/^  containerPolicies:/,/maxCheckpoints: [0-9]*/ s/^/#/' ./test/test_checkpointrestoreoperator.yaml
+          # cat ./test/test_checkpointrestoreoperator.yaml
           ls -la ${{ env.CHECKPOINT_DIR }}
-          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
+          kubectl apply -f ./test/test_checkpointrestoreoperator1.yaml
           ./test/generate_checkpoint_tar.sh
           sleep 5
           ls -la ${{ env.CHECKPOINT_DIR }}
