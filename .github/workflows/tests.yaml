@@ -62,34 +62,19 @@ jobs:
           ./test/wait_for_checkpoint_reduction.sh 2
           ls -la ${{ env.CHECKPOINT_DIR }}
 
-      # - name: Debug - Print Original YAML
-      #   run: |
-      #     echo "Original YAML before modifications:"
-      #     cat ./test/test_checkpointrestoreoperator.yaml
-
       - name: Modify and Apply YAML for 7 Checkpoints
         run: |
           sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 0/' ./test/test_checkpointrestoreoperator.yaml
           sed -i '/^  containerPolicies:/,/maxCheckpoints: [0-9]*/ s/^/#/' ./test/test_checkpointrestoreoperator.yaml
-          echo "Modified YAML for 7 Checkpoints:"
-          cat ./test/test_checkpointrestoreoperator.yaml
           kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
           ./test/generate_checkpoint_tar.sh
           sleep 2
-          ls -la ${{ env.CHECKPOINT_DIR }}
           ./test/wait_for_checkpoint_reduction.sh 7
           ls -la ${{ env.CHECKPOINT_DIR }}
-
-      # - name: Debug - Print YAML Before 1 Checkpoint Modification
-      #   run: |
-      #     echo "YAML before 1 checkpoint modification:"
-      #     cat ./test/test_checkpointrestoreoperator.yaml
 
       - name: Modify and Apply YAML for 1 Checkpoint
         run: |
           sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 1/' ./test/test_checkpointrestoreoperator.yaml
-          echo "Modified YAML for 1 Checkpoint:"
-          cat ./test/test_checkpointrestoreoperator.yaml
           kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
           ./test/wait_for_checkpoint_reduction.sh 1
           ls -la ${{ env.CHECKPOINT_DIR }}
