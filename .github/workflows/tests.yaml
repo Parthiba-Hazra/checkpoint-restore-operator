@@ -21,6 +21,7 @@ jobs:
           # Install bats
           sudo apt-get update
           sudo apt-get install -y bats
+          sudo chmod +x "$(which bats)"
 
           # Install kind
           curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-amd64")] | first | .browser_download_url')"
