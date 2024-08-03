@@ -4,13 +4,13 @@ CHECKPOINT_DIR=${CHECKPOINT_DIR:-/var/lib/kubelet/checkpoints}
 
 function log_and_run() {
   echo "Running: $*" >&2
-  "$@"
+  output=$("$@" 2>&1)
   status=$?
   echo "Status: $status" >&2
+  echo "Output:" >&2
+  echo "$output" >&2
   if [ "$status" -ne 0 ]; then
     echo "Command failed with status $status: $*" >&2
-    echo "Output:" >&2
-    echo "$output" >&2
   fi
   return $status
 }
