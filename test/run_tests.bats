@@ -3,7 +3,7 @@
 CHECKPOINT_DIR=${CHECKPOINT_DIR:-/var/lib/kubelet/checkpoints}
 
 function teardown() {
-  rm -rf "${CHECKPOINT_DIR:?}"/*
+  sudo rm -rf "${CHECKPOINT_DIR:?}"/*
 }
 
 @test "test_garbage_collection" {
