@@ -1,3 +1,5 @@
+name: Build and Deploy
+
 on: [push, pull_request]
 
 jobs:
@@ -12,7 +14,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22
+          go-version-file: 'go.mod'
 
       - name: Install dependencies
         run: |
@@ -20,7 +22,7 @@ jobs:
           curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-amd64")] | first | .browser_download_url')"
           chmod +x kind
           sudo mv kind /bin/
-          
+
           # Install kubectl
           curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
@@ -30,7 +32,6 @@ jobs:
         run: |
           sudo mkdir -p ${{ env.CHECKPOINT_DIR }}
           sudo chmod 700 ${{ env.CHECKPOINT_DIR }}
-          sudo chown $USER ${{ env.CHECKPOINT_DIR }}
 
       - name: Generate Checkpoint Tar Files
         run: ./test/generate_checkpoint_tar.sh
@@ -47,7 +48,6 @@ jobs:
         run: |
           make install
           make deploy IMG=checkpoint-restore-operator:ci
-          sudo ls ${{ env.CHECKPOINT_DIR }}
 
       - name: Wait for deployments to be ready
         run: ./test/wait_for_deployment.sh checkpoint-restore-operator-controller-manager
@@ -55,26 +55,17 @@ jobs:
       - name: Check resources
         run: kubectl get all -n checkpoint-restore-operator-system
 
-      - name: Wait for Checkpoint Tar Files to Reduce to 2
-        run: |
-          ls -la ${{ env.CHECKPOINT_DIR }}
-          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
-          ./test/wait_for_checkpoint_reduction.sh 2
-          ls -la ${{ env.CHECKPOINT_DIR }}
+      - name: Test Garbage Collection
+        run: ./test/run_tests.sh test_garbage_collection
 
-      - name: Modify and Apply YAML for 7 Checkpoints
-        run: |
-          sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 0/' ./test/test_checkpointrestoreoperator.yaml
-          sed -i '/^  containerPolicies:/,/maxCheckpoints: [0-9]*/ s/^/#/' ./test/test_checkpointrestoreoperator.yaml
-          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
-          ./test/generate_checkpoint_tar.sh
-          sleep 2
-          ./test/wait_for_checkpoint_reduction.sh 7
-          ls -la ${{ env.CHECKPOINT_DIR }}
+      - name: Test Max Checkpoints Set to 0
+        run: ./test/run_tests.sh test_max_checkpoints_set_to_0
 
-      - name: Modify and Apply YAML for 1 Checkpoint
-        run: |
-          sed -i 's/maxCheckpointsPerContainer: [0-9]*/maxCheckpointsPerContainer: 1/' ./test/test_checkpointrestoreoperator.yaml
-          kubectl apply -f ./test/test_checkpointrestoreoperator.yaml
-          ./test/wait_for_checkpoint_reduction.sh 1
-          ls -la ${{ env.CHECKPOINT_DIR }}
+      - name: Test Max Checkpoints Set to 1
+        run: ./test/run_tests.sh test_max_checkpoints_set_to_1
+
+      - name: Test Max Total Checkpoint Size
+        run: ./test/run_tests.sh test_max_total_checkpoint_size
+
+      - name: Test Max Checkpoint Size
+        run: ./test/run_tests.sh test_max_checkpoint_size

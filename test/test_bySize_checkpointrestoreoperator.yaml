@@ -12,11 +12,13 @@ spec:
   checkpointDirectory: /var/lib/kubelet/checkpoints
   applyPoliciesImmediately: true
   globalPolicy:
-    maxCheckpointsPerNamespace: 10
-    maxCheckpointsPerPod: 10
-    maxCheckpointsPerContainer: 5
+    maxCheckpointSize: 4
+    maxTotalSizePerNamespace: 1000
+    maxTotalSizePerPod: 500
+    maxTotalSizePerContainer: 100
   containerPolicies:
     - namespace: namespace
       pod: podname
       container: containername
-      maxCheckpoints: 0
+      maxCheckpointSize: 6
+      maxTotalSize: 12
