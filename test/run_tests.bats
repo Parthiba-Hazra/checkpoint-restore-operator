@@ -20,13 +20,13 @@ function teardown() {
 }
 
 @test "test_garbage_collection" {
-  log_and_run sudo ls -la "$CHECKPOINT_DIR"
+  log_and_run ls -la "$CHECKPOINT_DIR"
   [ "$status" -eq 0 ]
   log_and_run kubectl apply -f ./test/test_byCount_checkpointrestoreoperator.yaml
   [ "$status" -eq 0 ]
   log_and_run ./test/wait_for_checkpoint_reduction.sh 2
   [ "$status" -eq 0 ]
-  log_and_run sudo ls -la "$CHECKPOINT_DIR"
+  log_and_run ls -la "$CHECKPOINT_DIR"
   [ "$status" -eq 0 ]
 }
 
@@ -42,7 +42,7 @@ function teardown() {
   log_and_run sleep 2
   log_and_run ./test/wait_for_checkpoint_reduction.sh 5
   [ "$status" -eq 0 ]
-  log_and_run sudo ls -la "$CHECKPOINT_DIR"
+  log_and_run ls -la "$CHECKPOINT_DIR"
   [ "$status" -eq 0 ]
 }
 
@@ -55,7 +55,7 @@ function teardown() {
   [ "$status" -eq 0 ]
   log_and_run ./test/wait_for_checkpoint_reduction.sh 1
   [ "$status" -eq 0 ]
-  log_and_run sudo ls -la "$CHECKPOINT_DIR"
+  log_and_run ls -la "$CHECKPOINT_DIR"
   [ "$status" -eq 0 ]
 }
 
@@ -66,7 +66,7 @@ function teardown() {
   [ "$status" -eq 0 ]
   log_and_run ./test/wait_for_checkpoint_reduction.sh 2
   [ "$status" -eq 0 ]
-  log_and_run sudo ls -la "$CHECKPOINT_DIR"
+  log_and_run ls -la "$CHECKPOINT_DIR"
   [ "$status" -eq 0 ]
 }
 
@@ -79,6 +79,6 @@ function teardown() {
   [ "$status" -eq 0 ]
   log_and_run ./test/wait_for_checkpoint_reduction.sh 0
   [ "$status" -eq 0 ]
-  log_and_run sudo ls -la "$CHECKPOINT_DIR"
+  log_and_run ls -la "$CHECKPOINT_DIR"
   [ "$status" -eq 0 ]
 }

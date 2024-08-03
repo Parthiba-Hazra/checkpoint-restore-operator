@@ -21,7 +21,6 @@ jobs:
           # Install bats
           sudo apt-get update
           sudo apt-get install -y bats
-          sudo chmod +x "$(which bats)"
 
           # Install kind
           curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-amd64")] | first | .browser_download_url')"
@@ -67,10 +66,10 @@ jobs:
         run: sudo -E bats -f "test_max_checkpoints_set_to_0" ./test/run_tests.bats
 
       - name: Test Max Checkpoints Set to 1
-        run: bats -f "test_max_checkpoints_set_to_1" ./test/run_tests.bats
+        run: sudo -E bats -f "test_max_checkpoints_set_to_1" ./test/run_tests.bats
 
       - name: Test Max Total Checkpoint Size
-        run: bats -f "test_max_total_checkpoint_size" ./test/run_tests.bats
+        run: sudo -E bats -f "test_max_total_checkpoint_size" ./test/run_tests.bats
 
       - name: Test Max Checkpoint Size
-        run: bats -f "test_max_checkpoint_size" ./test/run_tests.bats
+        run: sudo -E bats -f "test_max_checkpoint_size" ./test/run_tests.bats
