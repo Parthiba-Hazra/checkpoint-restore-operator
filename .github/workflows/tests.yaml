@@ -61,10 +61,10 @@ jobs:
         run: kubectl get all -n checkpoint-restore-operator-system
 
       - name: Test Garbage Collection
-        run: bats -f "test_garbage_collection" ./test/run_tests.bats
+        run: sudo -E bats -f "test_garbage_collection" ./test/run_tests.bats
 
       - name: Test Max Checkpoints Set to 0
-        run: bats -f "test_max_checkpoints_set_to_0" ./test/run_tests.bats
+        run: sudo -E bats -f "test_max_checkpoints_set_to_0" ./test/run_tests.bats
 
       - name: Test Max Checkpoints Set to 1
         run: bats -f "test_max_checkpoints_set_to_1" ./test/run_tests.bats
