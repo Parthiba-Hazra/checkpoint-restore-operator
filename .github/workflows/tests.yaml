@@ -64,9 +64,7 @@ jobs:
         run: |
           REGISTRY_ID=$(docker ps -qf "ancestor=registry:2")
           echo "$REGISTRY_ID"
-          if [ -n "$REGISTRY_ID" ]; then
-            docker network connect kind $REGISTRY_ID
-          fi
+          docker network connect kind $REGISTRY_ID
 
       - name: Verify Registry Connection
         run: |
