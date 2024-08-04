@@ -4,7 +4,7 @@ nodes:
 - role: control-plane
   extraPortMappings:
   - containerPort: 5000
-    hostPort: 5001
+    hostPort: 5000
     protocol: TCP
   extraMounts:
   - hostPath: /var/lib/kubelet/checkpoints
