@@ -4,7 +4,7 @@ nodes:
 - role: control-plane
   extraPortMappings:
   - containerPort: 5000
-    hostPort: 5000
+    hostPort: 5001
     protocol: TCP
   extraMounts:
   - hostPath: /var/lib/kubelet/checkpoints
@@ -12,5 +12,5 @@ nodes:
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."host.docker.internal:5000"]
-    endpoint = ["http://host.docker.internal:5000"]
+    endpoint = ["http://host.docker.internal:5001"]
 

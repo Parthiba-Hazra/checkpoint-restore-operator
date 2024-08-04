@@ -76,7 +76,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: localhost:5000/checkpoint-restore-operator:ci
+          tags: localhost:5001/checkpoint-restore-operator:ci
 
       # - name: Check Docker Images in Kind
       #   run: |
@@ -85,7 +85,7 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           make install
-          make deploy IMG=localhost:5000/checkpoint-restore-operator:ci
+          make deploy IMG=localhost:5001/checkpoint-restore-operator:ci
 
       - name: Wait for deployments to be ready
         run: ./test/wait_for_deployment.sh checkpoint-restore-operator-controller-manager
