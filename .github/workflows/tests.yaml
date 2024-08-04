@@ -78,9 +78,9 @@ jobs:
           push: true
           tags: localhost:5000/checkpoint-restore-operator:ci
 
-      - name: Check Docker Images in Kind
-        run: |
-          docker exec -it $(docker ps -qf "name=kind-control-plane") crictl images
+      # - name: Check Docker Images in Kind
+      #   run: |
+      #     docker exec -it $(docker ps -qf "name=kind-control-plane") crictl images
 
       - name: Deploy to Kubernetes
         run: |
