@@ -62,8 +62,8 @@ jobs:
 
       - name: Connect the registry to the Kind network
         run: |
-          REGISTRY_ID=$(docker ps -qf "name=registry2")
-          echo "$REGISTRY_ID""
+          REGISTRY_ID=$(docker ps -qf "ancestor=registry:2")
+          echo "$REGISTRY_ID"
           if [ -n "$REGISTRY_ID" ]; then
             docker network connect kind $REGISTRY_ID
           fi
