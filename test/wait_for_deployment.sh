@@ -2,7 +2,7 @@
 
 wait_for_deployment() {
 	local deployment_name="$1"
-	timeout=60 # 5 minutes (60 * 5 sec)
+	timeout=20 # 5 minutes (60 * 5 sec)
 	i=1
 	echo "Checking if the ${deployment_name} deployment is ready"
 	until kubectl -n checkpoint-restore-operator-system get deployment "${deployment_name}" -o jsonpath='{.status.conditions[?(@.status=="True")].type}' | grep "Available" 2>/dev/null; do

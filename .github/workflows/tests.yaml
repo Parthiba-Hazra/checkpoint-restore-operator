@@ -49,6 +49,7 @@ jobs:
         run: |
           sudo mkdir -p ${{ env.CHECKPOINT_DIR }}
           sudo chmod 700 ${{ env.CHECKPOINT_DIR }}
+          kind delete cluster || true
 
       - name: Generate Checkpoint Tar Files
         run: ./test/generate_checkpoint_tar.sh
@@ -56,9 +57,30 @@ jobs:
       - name: Create Kubernetes cluster
         run: kind create cluster --config=./test/kind-config.yaml
 
-      - name: Build and push to local registry
+      - name: Ensure kind network exists
+        run: docker network inspect kind || true
+
+      - name: Connect the registry to the Kind network
         run: |
-          docker buildx build --push --tag localhost:5000/checkpoint-restore-operator:ci .
+          REGISTRY_ID=$(docker ps -qf "name=registry")
+          if [ -n "$REGISTRY_ID" ]; then
+            docker network connect kind $REGISTRY_ID
+          fi
+
+      - name: Verify Registry Connection
+        run: |
+          docker network inspect kind
+          docker ps
+
+      - name: Build and push to local registry
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: localhost:5000/checkpoint-restore-operator:ci
+
+      - name: Check Docker Images in Kind
+        run: |
+          docker exec -it $(docker ps -qf "name=kind-control-plane") crictl images
 
       - name: Deploy to Kubernetes
         run: |
