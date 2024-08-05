@@ -12,6 +12,8 @@ jobs:
           - 5000:5000
     env:
       CHECKPOINT_DIR: /var/lib/kubelet/checkpoints
+      REGISTRY_PORT: 5000
+      KIND_CLUSTER_NAME: kind-cluster
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -31,19 +33,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Install bats
           sudo apt-get update
-          sudo apt-get install -y bats
-
+          sudo apt-get install -y bats jq
           # Install kind
           curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-amd64")] | first | .browser_download_url')"
           chmod +x kind
-          sudo mv kind /bin/
-
+          sudo mv kind /usr/local/bin/
           # Install kubectl
           curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
-          sudo mv kubectl /bin/
+          sudo mv kubectl /usr/local/bin/
 
       - name: Prepare Checkpoints Directory in Host
         run: |
@@ -57,19 +56,20 @@ jobs:
       - name: Create Kubernetes cluster
         run: kind create cluster --config=./test/kind-config.yaml
 
-      - name: Ensure kind network exists
-        run: docker network inspect kind || true
-
       - name: Connect the registry to the Kind network
+        id: connect-registry
         run: |
           REGISTRY_ID=$(docker ps -qf "ancestor=registry:2")
-          echo "$REGISTRY_ID"
+          REGISTRY_NAME=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' $REGISTRY_ID)
+          echo "REGISTRY_NAME=$REGISTRY_NAME" >> $GITHUB_ENV
           docker network connect kind $REGISTRY_ID
 
-      - name: Verify Registry Connection
-        run: |
-          docker network inspect kind
-          docker ps
+      - name: Configure Local Registry in Kind Nodes
+        run: ./test/configure_local_registry.sh
+        env:
+          KIND_CLUSTER_NAME: ${{ env.KIND_CLUSTER_NAME }}
+          REGISTRY_PORT: ${{ env.REGISTRY_PORT }}
+          REGISTRY_NAME: ${{ env.REGISTRY_NAME }}
 
       - name: Build and push to local registry
         uses: docker/build-push-action@v6

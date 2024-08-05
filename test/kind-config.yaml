@@ -1,15 +1,15 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+name: kind-cluster
 nodes:
 - role: control-plane
-  extraPortMappings:
-  - containerPort: 5000
-    hostPort: 5001
   extraMounts:
   - hostPath: /var/lib/kubelet/checkpoints
     containerPath: /var/lib/kubelet/checkpoints
 containerdConfigPatches:
 - |-
+  [plugins."io.containerd.grpc.v1.cri".registry]
+    config_path = "/etc/containerd/certs.d"
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."host.docker.internal:5000"]
     endpoint = ["http://host.docker.internal:5000"]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
