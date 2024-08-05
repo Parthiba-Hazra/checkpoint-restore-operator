@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Set variables
-kind_cluster_name="${KIND_CLUSTER_NAME}"
 reg_port="${REGISTRY_PORT}"
 registry_name="${REGISTRY_NAME}"
 registry_dir="/etc/containerd/certs.d/localhost:${reg_port}"
@@ -9,7 +8,7 @@ config_map_name="local-registry-hosting"
 namespace="kube-public"
 
 # Configure Local Registry in Kind Nodes
-for node in $(kind get nodes --name "${kind_cluster_name}"); do
+for node in $(kind get nodes); do
   docker exec "${node}" mkdir -p "${registry_dir}"
   cat <<EOF | docker exec -i "${node}" tee "${registry_dir}/hosts.toml"
 [host."http://${registry_name}:${reg_port}"]
