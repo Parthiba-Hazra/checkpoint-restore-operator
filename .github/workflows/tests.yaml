@@ -33,16 +33,19 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # Install bats
           sudo apt-get update
           sudo apt-get install -y bats jq
+
           # Install kind
           curl -sLo kind "$(curl -sL https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '[.assets[] | select(.name == "kind-linux-amd64")] | first | .browser_download_url')"
           chmod +x kind
-          sudo mv kind /usr/local/bin/
+          sudo mv kind /bin/
+          
           # Install kubectl
           curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
           chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
+          sudo mv kubectl /bin/
 
       - name: Prepare Checkpoints Directory in Host
         run: |
