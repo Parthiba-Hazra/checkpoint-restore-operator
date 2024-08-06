@@ -64,12 +64,7 @@ jobs:
           REGISTRY_ID=$(docker ps -qf "ancestor=registry:2")
           REGISTRY_NAME=$(docker inspect -f '{{.Name}}' $REGISTRY_ID | sed 's/\///')
           echo "REGISTRY_NAME=$REGISTRY_NAME" >> $GITHUB_ENV
-
-      - name: Configure Local Registry in Kind Nodes
-        run: ./test/configure_local_registry.sh
-        env:
-          REGISTRY_PORT: ${{ env.REGISTRY_PORT }}
-          REGISTRY_NAME: ${{ env.REGISTRY_NAME }}
+          ./test/configure_local_registry.sh
 
       - name: Build and push to local registry
         uses: docker/build-push-action@v6
