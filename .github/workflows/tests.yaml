@@ -65,6 +65,9 @@ jobs:
           REGISTRY_NAME=$(docker inspect -f '{{.Name}}' $REGISTRY_ID | sed 's/\///')
           echo "REGISTRY_NAME=$REGISTRY_NAME" >> $GITHUB_ENV
           ./test/configure_local_registry.sh
+        env:
+          REGISTRY_PORT: ${{ env.REGISTRY_PORT }}
+          REGISTRY_NAME: ${{ env.REGISTRY_NAME }}
 
       - name: Build and push to local registry
         uses: docker/build-push-action@v6
