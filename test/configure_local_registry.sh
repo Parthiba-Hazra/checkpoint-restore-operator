@@ -24,10 +24,10 @@ cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: ConfigMap
 metadata:
-	name: ${config_map_name}
-	namespace: ${namespace}
+  name: ${config_map_name}
+  namespace: ${namespace}
 data:
-	localRegistryHosting.v1: |
-		host: "localhost:${reg_port}"
-		help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
+  localRegistryHosting.v1: |
+    host: "localhost:${reg_port}"
+    help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
 EOF
